@@ -40,6 +40,11 @@ namespace HealthGraphAPI
         internal const string PATH_USER = "/user";
 
         /// <summary>
+        /// This is the path for the user profile resource.
+        /// </summary>
+        internal const string PATH_PROFILE = "/profile";
+
+        /// <summary>
         /// URL QueryString key to pass the registered application unique identifier.
         /// </summary>
         internal const string QUERY_CLIENT_ID = "client_id";

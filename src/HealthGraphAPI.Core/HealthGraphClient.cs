@@ -6,13 +6,13 @@
 //-----------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using static HealthGraphAPI.Constants;
 
@@ -35,7 +35,7 @@ namespace HealthGraphAPI
         /// <summary>
         /// Helper for <see cref="IDisposable"/> implementation, to detect redundant calls.
         /// </summary>
-        private bool disposed = false;
+        private bool disposed;
 
         #endregion
 
@@ -85,14 +85,16 @@ namespace HealthGraphAPI
         /// Builds and returns the authorization URL to start the flow for connecting account from application to Health Graph.
         /// </summary>
         /// <returns>The authorization URL to start the flow for connecting account from application to Health Graph.</returns>
-        /// <exception cref="ArgumentException">The <see cref="Auth"/> is null or has invalid values.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="Auth"/> is null or has invalid values.</exception>
         public Uri BuildAuthorizeUri()
         {
             EnsureAuth();
-            var queryBuilder = new QueryBuilder();
-            queryBuilder.Add(QUERY_CLIENT_ID, Auth.ClientID);
-            queryBuilder.Add(QUERY_REDIRECT_URI, Auth.RedirectUri.ToString());
-            queryBuilder.Add(QUERY_RESPONSE_TYPE, RESPONSE_TYPE_CODE);
+            var queryBuilder = new QueryBuilder
+            {
+                {QUERY_CLIENT_ID, Auth.ClientId},
+                {QUERY_REDIRECT_URI, Auth.RedirectUri.ToString()},
+                {QUERY_RESPONSE_TYPE, RESPONSE_TYPE_CODE}
+            };
             if (!string.IsNullOrEmpty(Auth.State?.Trim()))
                 queryBuilder.Add(QUERY_STATE, Auth.State?.Trim());
             return new UriBuilder(URL_AUTHORIZATION)
@@ -106,10 +108,17 @@ namespace HealthGraphAPI
         /// </summary>
         /// <param name="uri">The URL redirected from browser.</param>
         /// <returns>The result of authorize/de-authorize flow.</returns>
-        /// <exception cref="ArgumentException">The <see cref="Auth"/> is null or has invalid values.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="Auth"/> is null or has invalid values.</exception>
         public HealthGraphAuthResult HandleAuthorization(Uri uri)
         {
-            return HandleAuthorizationAsync(uri).Result;
+            try
+            {
+                return HandleAuthorizationAsync(uri).Result;
+            }
+            catch (AggregateException aggregateException)
+            {
+                throw aggregateException.InnerException;
+            }
         }
 
         /// <summary>
@@ -117,7 +126,7 @@ namespace HealthGraphAPI
         /// </summary>
         /// <param name="uri">The URL redirected from browser.</param>
         /// <returns>The result of authorize/de-authorize flow.</returns>
-        /// <exception cref="ArgumentException">The <see cref="Auth"/> is null or has invalid values.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="Auth"/> is null or has invalid values or the status sent does not match with status received.</exception>
         public async Task<HealthGraphAuthResult> HandleAuthorizationAsync(Uri uri)
         {
             EnsureAuth();
@@ -132,11 +141,11 @@ namespace HealthGraphAPI
                 var code = queryValues.ContainsKey(QUERY_CODE) ? queryValues[QUERY_CODE].ToString() : null;
                 var state = queryValues.ContainsKey(QUERY_STATE) ? queryValues[QUERY_STATE].ToString() : null;
                 if (!string.Equals(Auth.State, state, StringComparison.OrdinalIgnoreCase))
-                    throw new ArgumentOutOfRangeException(nameof(Auth.State));
+                    throw new InvalidOperationException("The request-response states do not match.");
                 // Build parameters to request token
                 var tokenParams = new Dictionary<string, string>
                 {
-                    { QUERY_CLIENT_ID, Auth.ClientID },
+                    { QUERY_CLIENT_ID, Auth.ClientId },
                     { QUERY_CLIENT_SECRET, Auth.ClientSecret },
                     { QUERY_CODE, code },
                     { QUERY_GRANT_TYPE, GRANT_TYPE_AUTHORIZATION_CODE },
@@ -184,7 +193,7 @@ namespace HealthGraphAPI
         /// Reads the user resource.
         /// </summary>
         /// <returns>An instance of <see cref="HealthGraphUser"/> with user resource information.</returns>
-        /// <exception cref="ArgumentException">The <see cref="Token"/> is null or has invalid values.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="Token"/> is null or has invalid values.</exception>
         public HealthGraphUser ReadUser()
         {
             try
@@ -193,22 +202,49 @@ namespace HealthGraphAPI
             }
             catch (AggregateException aggregateException)
             {
-                throw aggregateException.InnerExceptions.FirstOrDefault();
+                throw aggregateException.InnerException;
             }
-            //catch
-            //{
-            //    throw;
-            //}
         }
 
         /// <summary>
         /// Reads the user resource.
         /// </summary>
         /// <returns>An instance of <see cref="HealthGraphUser"/> with user resource information.</returns>
-        /// <exception cref="ArgumentException">The <see cref="Token"/> is null or has invalid values.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="Token"/> is null or has invalid values.</exception>
         public async Task<HealthGraphUser> ReadUserAsync()
         {
             return await PerformRequestAsync<HealthGraphUser>(HttpMethod.Get, PATH_USER);
+        }
+
+        #endregion
+
+        #region Profile Methods
+
+        /// <summary>
+        /// Reads the user profile.
+        /// </summary>
+        /// <returns>An instance of <see cref="HealthGraphProfile"/> with user profile information.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="Token"/> is null or has invalid values.</exception>
+        public HealthGraphProfile ReadProfile()
+        {
+            try
+            {
+                return ReadProfileAsync().Result;
+            }
+            catch (AggregateException aggregateException)
+            {
+                throw aggregateException.InnerException;
+            }
+        }
+
+        /// <summary>
+        /// Reads the user profile.
+        /// </summary>
+        /// <returns>An instance of <see cref="HealthGraphProfile"/> with user profile information.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="Token"/> is null or has invalid values.</exception>
+        public async Task<HealthGraphProfile> ReadProfileAsync()
+        {
+            return await PerformRequestAsync<HealthGraphProfile>(HttpMethod.Get, PATH_PROFILE);
         }
 
         #endregion
@@ -248,90 +284,52 @@ namespace HealthGraphAPI
         /// <summary>
         /// Ensures that <see cref="Auth"/> is valid and has valid values.
         /// </summary>
-        /// <exception cref="ArgumentException">The <see cref="Auth"/> is null or has invalid values.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="Auth"/> is null or has invalid values.</exception>
         private void EnsureAuth()
         {
             if (Auth == null ||
-                string.IsNullOrEmpty(Auth.ClientID?.Trim()) ||
+                string.IsNullOrEmpty(Auth.ClientId?.Trim()) ||
                 string.IsNullOrEmpty(Auth.ClientSecret?.Trim()) ||
                 Auth.RedirectUri == null)
-                throw new ArgumentException("The authorization data is not valid.", nameof(Auth));
+                throw new InvalidOperationException("The authorization data is not valid.");
         }
 
         /// <summary>
         /// Ensures that <see cref="Token"/> is valid and has valid values.
         /// </summary>
-        /// <exception cref="ArgumentException">The <see cref="Token"/> is null or has invalid values.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="Token"/> is null or has invalid values.</exception>
         private void EnsureToken()
         {
             if (Token == null ||
                 string.IsNullOrEmpty(Token.TokenType?.Trim()) ||
                 string.IsNullOrEmpty(Token.AccessToken?.Trim()))
-                throw new ArgumentException("The token data is not valid.", nameof(Token));
-        }
-
-        private string PerformRequest(HttpMethod method, string path, string query = null)
-        {
-            return PerformRequestAsync(method, path, query).Result;
-        }
-
-        private T PerformRequest<T>(HttpMethod method, string path, string query = null)
-        {
-            return PerformRequestAsync<T>(method, path, query).Result;
+                throw new InvalidOperationException("The token data is not valid.");
         }
 
         /// <summary>
-        /// 
+        /// Single-point to perform requests to Health Graph API.
         /// </summary>
-        /// <param name="method"></param>
-        /// <param name="path"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">The <see cref="Token"/> is null or has invalid values.</exception>
-        private async Task<string> PerformRequestAsync(HttpMethod method, string path, string query = null)
-        {
-            EnsureToken();
-            if (string.IsNullOrEmpty(path?.Trim()))
-                throw new ArgumentNullException(nameof(path));
-            string result = null;
-            var uriBuilder = new UriBuilder(URL_BASE_API);
-            uriBuilder.Path = path;
-            var request = new HttpRequestMessage(method, uriBuilder.Uri);
-            request.Headers.Add(nameof(request.Headers.Authorization), $"{Token.TokenType} {Token.AccessToken}");
-            try
-            {
-                var response = await httpClient.SendAsync(request);
-                result = await response.Content.ReadAsStringAsync();
-            }
-            catch // (System.Exception)
-            {
-                // TODO: Create a HealthGraphException class, instanciate and throw
-                throw;
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="method"></param>
-        /// <param name="path"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">The <see cref="Token"/> is null or has invalid values.</exception>
+        /// <param name="method">The HTTP method to perform.</param>
+        /// <param name="path">The resource path.</param>
+        /// <param name="query">The query string.</param>
+        /// <returns>An </returns>
+        /// <exception cref="InvalidOperationException">The <see cref="Token"/> is null or has invalid values.</exception>
+        /// <exception cref="HealthGraphException">The request failed or the HTTP response status code is not successful.</exception>
         private async Task<T> PerformRequestAsync<T>(HttpMethod method, string path, string query = null)
         {
             EnsureToken();
             if (string.IsNullOrEmpty(path?.Trim()))
                 throw new ArgumentNullException(nameof(path));
-            var result = default(T);
-            var uriBuilder = new UriBuilder(URL_BASE_API);
-            uriBuilder.Path = path;
+            T result;
+            var uriBuilder = new UriBuilder(URL_BASE_API) { Path = path };
+            if (!string.IsNullOrEmpty(query?.Trim()))
+                uriBuilder.Query = query;
             var request = new HttpRequestMessage(method, uriBuilder.Uri);
             request.Headers.Add(nameof(request.Headers.Authorization), $"{Token.TokenType} {Token.AccessToken}");
             try
             {
                 var response = await httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
                 var contentString = await response.Content.ReadAsStringAsync();
                 var serializerSettings = new JsonSerializerSettings
                 {
@@ -339,14 +337,14 @@ namespace HealthGraphAPI
                     {
                         NamingStrategy = new SnakeCaseNamingStrategy()
                     },
-                    NullValueHandling = NullValueHandling.Ignore
+                    NullValueHandling = NullValueHandling.Ignore,
                 };
+                serializerSettings.Converters.Add(new IsoDateTimeConverter());
                 result = JsonConvert.DeserializeObject<T>(contentString, serializerSettings);
             }
-            catch // (System.Exception)
+            catch (Exception ex)
             {
-                // TODO: Create a HealthGraphException class, instanciate and throw
-                throw;
+                throw new HealthGraphException(ex.Message, ex, uriBuilder.Uri);
             }
             return result;
         }

@@ -4,6 +4,7 @@
 // </copyright>
 // <author>Jorge Alberto Hernández Quirino</author>
 //-----------------------------------------------------------------------
+using Newtonsoft.Json;
 
 namespace HealthGraphAPI
 {
@@ -17,75 +18,88 @@ namespace HealthGraphAPI
         #region Properties
 
         /// <summary>
-        /// Gets or sets the unique ID for the user.
+        /// Gets the unique ID for the user.
         /// </summary>
-        [Newtonsoft.Json.JsonProperty(nameof(UserID))]
-        public int UserID { get; set; }
+        [JsonProperty(nameof(UserId))]
+        public int UserId { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the user profile resource.
+        /// Gets the URI of the user profile resource.
         /// </summary>
-        public string Profile { get; set; }
+        [JsonProperty]
+        public string Profile { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the sharing and display settings resource.
+        /// Gets the URI of the sharing and display settings resource.
         /// </summary>
-        public string Settings { get; set; }
+        [JsonProperty]
+        public string Settings { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the fitness activity feed.
+        /// Gets the URI of the first page of the fitness activity feed.
         /// </summary>
-        public string FitnessActivities { get; set; }
+        [JsonProperty]
+        public string FitnessActivities { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the strength training activity feed.
+        /// Gets the URI of the first page of the strength training activity feed.
         /// </summary>
-        public string StrengthTrainingActivities { get; set; }
+        [JsonProperty]
+        public string StrengthTrainingActivities { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the background activity feed.
+        /// Gets the URI of the first page of the background activity feed.
         /// </summary>
-        public string BackgroundActivities { get; set; }
+        [JsonProperty]
+        public string BackgroundActivities { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the sleep feed.
+        /// Gets the URI of the first page of the sleep feed.
         /// </summary>
-        public string Sleep { get; set; }
+        [JsonProperty]
+        public string Sleep { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the nutrition feed.
+        /// Gets the URI of the first page of the nutrition feed.
         /// </summary>
-        public string Nutrition { get; set; }
+        [JsonProperty]
+        public string Nutrition { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the weight measurement feed.
+        /// Gets the URI of the first page of the weight measurement feed.
         /// </summary>
-        public string Weight { get; set; }
+        [JsonProperty]
+        public string Weight { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the general measurements feed.
+        /// Gets the URI of the first page of the general measurements feed.
         /// </summary>
-        public string GeneralMeasurements { get; set; }
+        [JsonProperty]
+        public string GeneralMeasurements { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the first page of the diabetes measurements feed.
+        /// Gets the URI of the first page of the diabetes measurements feed.
         /// </summary>
-        public string Diabetes { get; set; }
+        [JsonProperty]
+        public string Diabetes { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the personal records resource.
+        /// Gets the URI of the personal records resource.
         /// </summary>
-        public string Records { get; set; }
+        [JsonProperty]
+        public string Records { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the friends (formerly known as the "street team") resource.
+        /// Gets the URI of the friends (formerly known as the "street team") resource.
         /// </summary>
-        public string Team { get; set; }
+        [JsonProperty]
+        public string Team { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the URI of the change log resource.
+        /// Gets the URI of the change log resource.
         /// </summary>
-        public string ChangeLog { get; set; }
+        [JsonProperty]
+        public string ChangeLog { get; internal set; }
 
         #endregion
 

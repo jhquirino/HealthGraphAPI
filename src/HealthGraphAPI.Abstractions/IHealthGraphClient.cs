@@ -71,6 +71,22 @@ namespace HealthGraphAPI
 
         #endregion
 
+        #region Profile Methods
+
+        /// <summary>
+        /// Reads the user profile.
+        /// </summary>
+        /// <returns>An instance of <see cref="HealthGraphProfile"/> with user profile information.</returns>
+        HealthGraphProfile ReadProfile();
+
+        /// <summary>
+        /// Reads the user profile.
+        /// </summary>
+        /// <returns>An instance of <see cref="HealthGraphProfile"/> with user profile information.</returns>
+        Task<HealthGraphProfile> ReadProfileAsync();
+
+        #endregion
+
     }
 
 }

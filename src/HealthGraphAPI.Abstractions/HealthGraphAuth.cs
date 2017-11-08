@@ -20,7 +20,7 @@ namespace HealthGraphAPI
         /// <summary>
         /// Gets or sets the unique identifier for a registered application.
         /// </summary>
-        public string ClientID { get; set; }
+        public string ClientId { get; set; }
 
         /// <summary>
         /// Gets or sets the secret for a registered application.

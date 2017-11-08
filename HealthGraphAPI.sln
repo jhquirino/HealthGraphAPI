@@ -6,7 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{E378D1F9-2
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{77099CE0-FA74-47AE-B188-A73CBCF367B1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HealthGraphAPI.Test", "test\HealthGraphAPI.Test\HealthGraphAPI.Test.csproj", "{22C6BDF1-9D76-44C2-9AC8-3D7F59FFAB92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HealthGraphAPI.Tests", "test\HealthGraphAPI.Tests\HealthGraphAPI.Tests.csproj", "{22C6BDF1-9D76-44C2-9AC8-3D7F59FFAB92}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HealthGraphAPI.Abstractions", "src\HealthGraphAPI.Abstractions\HealthGraphAPI.Abstractions.csproj", "{57739927-9EC0-4C96-874E-B93DB1897DA6}"
 EndProject
